@@ -93,6 +93,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
   var movable = !!window.opener;
   var fakeFs = false;
   var wx = screenX, wy = screenY, wvx = 5, wvy = 5;
+  var lastX = screenX, lastY = screenY;
   function bounceWindow(){
     if (!attacking || !movable) return;
     if (fakeFs) {
@@ -100,15 +101,16 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
       requestAnimationFrame(bounceWindow);
       return;
     }
-    wx += wvx;
-    wy += wvy;
-    var maxX = screen.availWidth - outerWidth;
-    var maxY = screen.availHeight - outerHeight;
-    if (wx <= 0) { wx = 0; wvx = Math.abs(wvx); }
-    if (wy <= 0) { wy = 0; wvy = Math.abs(wvy); }
-    if (wx >= maxX) { wx = maxX; wvx = -Math.abs(wvx); }
-    if (wy >= maxY) { wy = maxY; wvy = -Math.abs(wvy); }
     try { window.moveTo(wx, wy); } catch(e) {}
+    var dx = screenX - lastX;
+    var dy = screenY - lastY;
+    if (wvx > 0 && dx < 1) wvx = -Math.abs(wvx);
+    if (wvx < 0 && dx > -1) wvx = Math.abs(wvx);
+    if (wvy > 0 && dy < 1) wvy = -Math.abs(wvy);
+    if (wvy < 0 && dy > -1) wvy = Math.abs(wvy);
+    lastX = screenX; lastY = screenY;
+    wx = screenX + wvx;
+    wy = screenY + wvy;
     requestAnimationFrame(bounceWindow);
   }
 
@@ -227,10 +229,6 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
       if (!movable || fakeFs) return;
       try {
         window.resizeTo(Math.round(200 + Math.random() * 600), Math.round(200 + Math.random() * 500));
-        var maxX = screen.availWidth - outerWidth;
-        var maxY = screen.availHeight - outerHeight;
-        if (wx > maxX) wx = maxX;
-        if (wy > maxY) wy = maxY;
         window.moveTo(wx, wy);
       } catch(e) {}
     }, 1500);
@@ -286,7 +284,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
 
   overlay.style.display = 'flex';
   if (probePopups()) {
-    statusEl.textContent = 'READY. CLICK TO ENTER.';
+    statusEl.textContent = '';
   } else {
     statusEl.textContent = 'POPUPS ARE BLOCKED. Allow pop-ups for this site, then click again.';
   }
