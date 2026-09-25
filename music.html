@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MUSIC TEST</title>
+</head>
+<body>
+<audio id="audioFile" controls>
+  <source src="troll.mp4">
+</audio>
+<p id="status">autoplaying muted...</p>
+<script>
+var audioToPlay = document.getElementById("audioFile");
+var s = document.getElementById('status');
+window.onload = function() {
+  audioToPlay.muted = true;
+  audioToPlay.play().then(function(){
+    s.textContent = 'PLAYING MUTED (click anywhere for sound)';
+  }).catch(function(e){
+    s.textContent = 'FAILED: ' + e.name + ' - ' + e.message;
+  });
+};
+function unmute(){
+  audioToPlay.muted = false;
+  audioToPlay.play().then(function(){
+    s.textContent = 'PLAYING UNMUTED';
+  }).catch(function(e){
+    s.textContent = 'STILL BLOCKED: ' + e.name + ' - ' + e.message;
+  });
+}
+['click','keydown','pointerdown','mousemove'].forEach(function(ev){
+  document.addEventListener(ev, unmute);
+});
+</script>
+</body>
+</html>

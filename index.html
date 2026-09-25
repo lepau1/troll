@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TROLL</title>
+<style>
+html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#000}
+#troll{position:fixed;width:100vw;height:100vh;object-fit:fill;left:0;top:0;user-select:none}
+#overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px;background:rgba(0,0,0,.85);z-index:100;text-align:center;font-family:Arial,Helvetica,sans-serif;color:#fff;padding:20px}
+#overlay h1{font-size:36px;margin:0}
+#overlay p{font-size:18px;margin:0;max-width:520px}
+#overlay button{font-size:22px;padding:14px 30px;cursor:pointer}
+</style>
+</head>
+<body>
+<img id="troll" src="troll.png" alt="">
+<audio id="audioFile" preload="auto">
+  <source src="troll.mp4">
+</audio>
+<div id="overlay">
+  <h1>TROLL</h1>
+  <p id="status">CHECKING...</p>
+  <button id="go">CLICK TO ENTER</button>
+</div>
+<script>
+(function(){
+  var params = new URLSearchParams(location.search);
+  var mode = params.get('mode') || 'main';
+  var startT = parseFloat(params.get('t')) || 0;
+
+  var audioToPlay = document.getElementById('audioFile');
+  var overlay = document.getElementById('overlay');
+  var bc = new BroadcastChannel('troll-sync');
+  var attacking = false;
+  var soundOn = false;
+
+  function tryUnmute(){
+    if (soundOn) return;
+    if (!audioToPlay.paused) return;
+    audioToPlay.muted = false;
+    audioToPlay.play().then(function(){ soundOn = true; }).catch(function(){});
+  }
+
+  function keepTrying(){
+    setTimeout(function(){
+      if (soundOn) return;
+      if (audioToPlay.paused) tryUnmute();
+      keepTrying();
+    }, 1000);
+  }
+
+  function startMusic(){
+    audioToPlay.addEventListener('canplaythrough', tryUnmute);
+    audioToPlay.addEventListener('loadeddata', tryUnmute);
+    tryUnmute();
+    keepTrying();
+  }
+
+  function spawn(){
+    var url = location.origin + location.pathname + '?mode=pop&t=' + (audioToPlay.currentTime || startT);
+    try {
+      var w = window.open(url, 'troll' + Date.now() + Math.random(), 'width=420,height=320,left=' + (Math.random()*700|0) + ',top=' + (Math.random()*400|0));
+      if (w) { try{ w.focus(); }catch(e){} }
+      return w;
+    } catch(e) { return null; }
+  }
+
+  function onInteract(){
+    if (!soundOn) tryUnmute();
+  }
+  function fullscreen1s(){
+    if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(function(){});
+    }
+  }
+  function onActivate(){
+    try { window.focus(); } catch(e) {}
+    if (Math.random() < 0.15) fullscreen1s();
+  }
+  document.addEventListener('fullscreenchange', function(){
+    if (document.fullscreenElement) {
+      setTimeout(function(){ document.exitFullscreen(); }, 1000);
+    }
+  });
+  ['click','keydown','pointerdown','touchstart'].forEach(function(ev){
+    document.addEventListener(ev, onInteract, {passive:true});
+  });
+  ['click','dblclick','mousedown','mouseup','keydown','pointerdown','touchstart'].forEach(function(ev){
+    document.addEventListener(ev, onActivate);
+  });
+
+  var movable = !!window.opener;
+  var fakeFs = false;
+  var wx = screenX, wy = screenY, wvx = 5, wvy = 5;
+  function bounceWindow(){
+    if (!attacking || !movable) return;
+    if (fakeFs) {
+      try { window.moveTo(0, 0); } catch(e) {}
+      requestAnimationFrame(bounceWindow);
+      return;
+    }
+    wx += wvx;
+    wy += wvy;
+    var maxX = screen.availWidth - outerWidth;
+    var maxY = screen.availHeight - outerHeight;
+    if (wx <= 0) { wx = 0; wvx = Math.abs(wvx); }
+    if (wy <= 0) { wy = 0; wvy = Math.abs(wvy); }
+    if (wx >= maxX) { wx = maxX; wvx = -Math.abs(wvx); }
+    if (wy >= maxY) { wy = maxY; wvy = -Math.abs(wvy); }
+    try { window.moveTo(wx, wy); } catch(e) {}
+    requestAnimationFrame(bounceWindow);
+  }
+
+  var TARGET = 6;
+  function spawn2(){
+    spawn();
+    spawn();
+  }
+  var wid = 't' + Date.now() + '_' + Math.floor(Math.random() * 1e6);
+
+  function amOldest(){
+    var oldest = wid;
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && k.indexOf('troll_') === 0) {
+        var w = k.substring(6);
+        var ts = parseInt(localStorage.getItem(k), 10);
+        if (!isNaN(ts) && w < oldest) oldest = w;
+      }
+    }
+    return oldest === wid;
+  }
+
+  function heartbeat(){
+    try { localStorage.setItem('troll_' + wid, Date.now()); } catch(e) {}
+  }
+
+  function scan(){
+    var now = Date.now();
+    var oldest = wid;
+    var stale = false;
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && k.indexOf('troll_') === 0) {
+        var w = k.substring(6);
+        var ts = parseInt(localStorage.getItem(k), 10);
+        if (!isNaN(ts)) {
+          if (now - ts > 4000) {
+            stale = true;
+          } else if (w < oldest) {
+            oldest = w;
+          }
+        }
+      }
+    }
+    if (stale && oldest === wid) {
+      for (var j = 0; j < localStorage.length; j++) {
+        var k2 = localStorage.key(j);
+        if (k2 && k2.indexOf('troll_') === 0) {
+          var ts2 = parseInt(localStorage.getItem(k2), 10);
+          if (!isNaN(ts2) && now - ts2 > 4000) localStorage.removeItem(k2);
+        }
+      }
+      spawn2();
+    }
+  }
+
+  function enterAttack(){
+    if (attacking) return;
+    attacking = true;
+    overlay.style.display = 'none';
+    audioToPlay.currentTime = startT;
+    startMusic();
+    bounceWindow();
+    try { localStorage.setItem('troll_' + wid, Date.now()); } catch(e) {}
+    window.onbeforeunload = function(){
+      spawn2();
+    };
+    window.onunload = function(){
+      try { localStorage.removeItem('troll_' + wid); } catch(e) {}
+    };
+    window.addEventListener('storage', function(e){
+      if (e.key && e.key.indexOf('troll_') === 0 && e.newValue === null) {
+        if (amOldest()) spawn2();
+      }
+    });
+    setInterval(heartbeat, 500);
+    setInterval(scan, 1500);
+    setInterval(function(){
+      if (!movable || fakeFs) return;
+      var now = Date.now();
+      var lock = '';
+      try { lock = localStorage.getItem('fslock') || ''; } catch(e) {}
+      if (lock && now - parseInt(lock.split(':')[1] || '0', 10) < 1500) return;
+      if (Math.random() < 0.06) {
+        fakeFs = true;
+        try {
+          localStorage.setItem('fslock', wid + ':' + now);
+          window.resizeTo(screen.availWidth, screen.availHeight);
+          window.moveTo(0, 0);
+        } catch(e) {}
+        setTimeout(function(){
+          fakeFs = false;
+          wx = 0; wy = 0;
+          try {
+            localStorage.removeItem('fslock');
+            window.resizeTo(Math.round(200 + Math.random() * 600), Math.round(200 + Math.random() * 500));
+          } catch(e) {}
+        }, 1000);
+      }
+    }, 2000);
+    setInterval(function(){
+      if (fakeFs) return;
+      try {
+        if (Math.random() < 0.3) window.focus();
+        if (Math.random() < 0.2) wvx = -wvx;
+        if (Math.random() < 0.2) wvy = -wvy;
+        if (Math.random() < 0.25) {
+          var sp = 2 + Math.random() * 10;
+          wvx = (wvx < 0 ? -1 : 1) * sp;
+          wvy = (wvy < 0 ? -1 : 1) * sp;
+        }
+      } catch(e) {}
+    }, 800);
+    setInterval(function(){
+      if (!movable || fakeFs) return;
+      try {
+        window.resizeTo(Math.round(200 + Math.random() * 600), Math.round(200 + Math.random() * 500));
+        var maxX = screen.availWidth - outerWidth;
+        var maxY = screen.availHeight - outerHeight;
+        if (wx > maxX) wx = maxX;
+        if (wy > maxY) wy = maxY;
+        window.moveTo(wx, wy);
+      } catch(e) {}
+    }, 1500);
+  }
+
+  bc.onmessage = function(e){
+    var d = e.data || {};
+    if (d.type === 'sync' && !audioToPlay.paused && audioToPlay.readyState > 1) {
+      var diff = d.t - audioToPlay.currentTime;
+      if (diff > 0.5) audioToPlay.currentTime = d.t;
+    }
+  };
+  setInterval(function(){
+    if (!audioToPlay.paused && attacking) bc.postMessage({type:'sync', t:audioToPlay.currentTime});
+  }, 250);
+
+  if (mode === 'probe') {
+    setTimeout(function(){ try{ window.close(); }catch(e){} }, 1000);
+    return;
+  }
+
+  if (mode === 'pop') {
+    enterAttack();
+    return;
+  }
+
+  window.onload = startMusic;
+
+  var statusEl = document.getElementById('status');
+
+  function probePopups(){
+    try {
+      var w = window.open(location.origin + location.pathname + '?mode=probe', 'probe' + Date.now(), 'width=300,height=200');
+      return !!w;
+    } catch(e) { return false; }
+  }
+
+  function launch(){
+    overlay.style.display = 'none';
+    enterAttack();
+    for (var i = 0; i < TARGET; i++) {
+      (function(n){ setTimeout(function(){ spawn(); }, n * 300); })(i);
+    }
+  }
+
+  document.getElementById('go').onclick = function(){
+    if (probePopups()) {
+      launch();
+    } else {
+      statusEl.textContent = 'POPUPS ARE BLOCKED. Allow pop-ups for this site, then click again.';
+    }
+  };
+
+  overlay.style.display = 'flex';
+  if (probePopups()) {
+    statusEl.textContent = 'READY. CLICK TO ENTER.';
+  } else {
+    statusEl.textContent = 'POPUPS ARE BLOCKED. Allow pop-ups for this site, then click again.';
+  }
+})();
+</script>
+</body>
+</html>
