@@ -400,25 +400,24 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     } else {
       setInterval(function(){
         try {
-          var roll = Math.floor(Math.random() * 10) + 1;
+          var roll = Math.floor(Math.random() * 20) + 1;
           if (roll === 1) {
             localStorage.setItem('troll_circle', Date.now());
             console.log('[leader] circle!');
           } else if (roll === 2) {
             localStorage.setItem('troll_border', Date.now());
             console.log('[leader] border!');
-          } else if (roll >= 3 && roll <= 5) {
+          } else if (roll === 3) {
+            var cur = localStorage.getItem('troll_mode') || 'dvd';
+            var next = cur === 'dvd' ? 'gravity' : 'dvd';
+            localStorage.setItem('troll_mode', next);
+            console.log('[leader] mode -> ' + next);
+          } else if (roll >= 4 && roll <= 8) {
             var t = pickRandomPopup();
             if (t) {
               localStorage.setItem('troll_reopen', t + ':' + Date.now());
               console.log('[leader] reopen ' + t);
             }
-          }
-          if (Math.random() < 0.1) {
-            var cur = localStorage.getItem('troll_mode') || 'dvd';
-            var next = cur === 'dvd' ? 'gravity' : 'dvd';
-            localStorage.setItem('troll_mode', next);
-            console.log('[leader] mode -> ' + next);
           }
         } catch(e) {}
       }, 1000);
