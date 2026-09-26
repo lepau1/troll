@@ -264,7 +264,6 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     console.log('[pop] spawn ' + (w ? 'ok' : 'BLOCKED'));
     setTimeout(function(){
       try { window.close(); } catch(e) {}
-      try { window.open('', '_self'); window.close(); } catch(e) {}
     }, 50);
   }
 
@@ -282,7 +281,9 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
       window.onbeforeunload = function(){
         try {
           var skip = localStorage.getItem('troll_skip_' + wid);
-          if (!skip) {
+          var counted = localStorage.getItem('troll_counted_' + wid);
+          if (!skip && !counted) {
+            localStorage.setItem('troll_counted_' + wid, '1');
             var w = parseInt(localStorage.getItem('twant'), 10);
             localStorage.setItem('twant', (isNaN(w) ? TARGET : w) + 1);
           }
@@ -291,7 +292,10 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
         } catch(e) {}
       };
       window.onunload = function(){
-        try { localStorage.removeItem('troll_' + wid); } catch(e) {}
+        try {
+          localStorage.removeItem('troll_' + wid);
+          localStorage.removeItem('troll_counted_' + wid);
+        } catch(e) {}
       };
       window.addEventListener('storage', function(e){
         if (e.key && e.key.indexOf('troll_') === 0 && e.newValue === null) {
