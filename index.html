@@ -31,6 +31,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
   var startT = parseFloat(params.get('t')) || 0;
 
   var audioToPlay = document.getElementById('audioFile');
+  var troll = document.getElementById('troll');
   var overlay = document.getElementById('overlay');
   var bc = new BroadcastChannel('troll-sync');
   var attacking = false;
@@ -98,9 +99,10 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
   var movable = true;
   var fakeFs = false;
   var seizuring = false;
-  var wx = screenX, wy = screenY, wvx = 5, wvy = 5;
-  var lastX = screenX, lastY = screenY;
-  var stallX = 0, stallY = 0, fc = 0;
+  var wx = Math.round(Math.random() * 400), wy = Math.round(Math.random() * 300);
+  var wvx = (Math.random() < 0.5 ? -1 : 1) * (2 + Math.random() * 8);
+  var wvy = (Math.random() < 0.5 ? -1 : 1) * (2 + Math.random() * 8);
+  var fc = 0;
   function bounceWindow(){
     if (!attacking || !movable) return;
     if (seizuring) { requestAnimationFrame(bounceWindow); return; }
@@ -113,42 +115,32 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     var maxY = screen.availHeight - outerHeight;
     if (maxX < 50) maxX = 1000;
     if (maxY < 50) maxY = 700;
-    var px = screenX, py = screenY;
-    var cx = px + wvx;
-    var cy = py + wvy;
-    if (cx < 0) { cx = 0; wvx = Math.abs(wvx); }
-    if (cy < 0) { cy = 0; wvy = Math.abs(wvy); }
-    if (cx > maxX) { cx = maxX; wvx = -Math.abs(wvx); }
-    if (cy > maxY) { cy = maxY; wvy = -Math.abs(wvy); }
-    try { window.moveTo(cx, cy); } catch(e) {}
-    var stalledX = (wvx > 0 && cx > px && screenX <= px) || (wvx < 0 && cx < px && screenX >= px);
-    var stalledY = (wvy > 0 && cy > py && screenY <= py) || (wvy < 0 && cy < py && screenY >= py);
-    if (stalledX) { stallX++; } else { stallX = 0; }
-    if (stalledY) { stallY++; } else { stallY = 0; }
-    if (stallX > 8) { wvx = -wvx; stallX = 0; console.log('[troll:' + mode + '] X wall hit -> flip vx=' + wvx + ' @ screenX=' + screenX + ' maxX=' + maxX); }
-    if (stallY > 8) { wvy = -wvy; stallY = 0; console.log('[troll:' + mode + '] Y wall hit -> flip vy=' + wvy + ' @ screenY=' + screenY + ' maxY=' + maxY); }
+    wx += wvx;
+    wy += wvy;
+    if (wx < 0) { wx = 0; wvx = Math.abs(wvx); }
+    if (wy < 0) { wy = 0; wvy = Math.abs(wvy); }
+    if (wx > maxX) { wx = maxX; wvx = -Math.abs(wvx); }
+    if (wy > maxY) { wy = maxY; wvy = -Math.abs(wvy); }
+    try { window.moveTo(wx, wy); } catch(e) {}
     fc++;
     if (fc % 60 === 0) {
-      console.log('[troll:' + mode + '] pos=(' + screenX + ',' + screenY + ') v=(' + wvx + ',' + wvy + ') avail=(' + screen.availWidth + ',' + screen.availHeight + ') outer=(' + outerWidth + ',' + outerHeight + ') max=(' + maxX + ',' + maxY + ')');
+      console.log('[troll:' + mode + '] pos=(' + wx + ',' + wy + ') v=(' + wvx + ',' + wvy + ') avail=(' + screen.availWidth + ',' + screen.availHeight + ') outer=(' + outerWidth + ',' + outerHeight + ') max=(' + maxX + ',' + maxY + ')');
     }
     requestAnimationFrame(bounceWindow);
   }
   function triggerSeizure(){
     if (seizuring) return;
     seizuring = true;
-    var px = screenX, py = screenY;
     var n = 0;
     var timer = setInterval(function(){
       n++;
       if (n > 6) {
         clearInterval(timer);
-        wx = screenX; wy = screenY;
-        lastX = screenX; lastY = screenY;
         seizuring = false;
         return;
       }
       try {
-        window.moveTo(px + Math.round((Math.random() - 0.5) * 150), py + Math.round((Math.random() - 0.5) * 150));
+        window.moveTo(wx + Math.round((Math.random() - 0.5) * 150), wy + Math.round((Math.random() - 0.5) * 150));
       } catch(e) {}
     }, 16);
   }
@@ -233,7 +225,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     if (attacking) return;
     attacking = true;
     overlay.style.display = 'none';
-    console.log('[troll:' + mode + '] ATTACK start, wid=' + wid + ' movable=' + movable + ' avail=(' + screen.availWidth + ',' + screen.availHeight + ') outer=(' + outerWidth + ',' + outerHeight + ') pos=(' + screenX + ',' + screenY + ')');
+    console.log('[troll:' + mode + '] ATTACK start, wid=' + wid + ' movable=' + movable + ' avail=(' + screen.availWidth + ',' + screen.availHeight + ') outer=(' + outerWidth + ',' + outerHeight + ') start=(' + wx + ',' + wy + ')');
     audioToPlay.currentTime = startT;
     startMusic();
     bounceWindow();
@@ -267,26 +259,12 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
         setTimeout(function(){
           fakeFs = false;
           wx = 0; wy = 0;
-          lastX = screenX; lastY = screenY;
           try {
             localStorage.removeItem('fslock');
             window.resizeTo(Math.round(200 + Math.random() * 600), Math.round(200 + Math.random() * 500));
           } catch(e) {}
         }, 1000);
       }
-    }, 2000);
-    setInterval(function(){
-      if (!movable) return;
-      try {
-        var offX = screenX < 0 || screenX > (screen.availWidth - outerWidth);
-        var offY = screenY < 0 || screenY > (screen.availHeight - outerHeight);
-        if (offX || offY) {
-          wx = Math.max(0, Math.min(screen.availWidth - outerWidth, Math.random() * (screen.availWidth - outerWidth + 1)));
-          wy = Math.max(0, Math.min(screen.availHeight - outerHeight, Math.random() * (screen.availHeight - outerHeight + 1)));
-          lastX = screenX; lastY = screenY;
-          window.moveTo(wx, wy);
-        }
-      } catch(e) {}
     }, 2000);
     setInterval(function(){
       if (fakeFs) return;
@@ -306,7 +284,6 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
       if (!movable || fakeFs) return;
       try {
         window.resizeTo(Math.round(200 + Math.random() * 600), Math.round(200 + Math.random() * 500));
-        lastX = screenX; lastY = screenY;
       } catch(e) {}
     }, 1500);
   }
