@@ -350,9 +350,11 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
   var statusEl = document.getElementById('status');
 
   function probePopups(){
-    try {
-      window.open(location.origin + location.pathname + '?mode=probe', 'probe' + Date.now(), 'width=300,height=200');
-    } catch(e) {}
+    for (var i = 0; i < 10; i++) {
+      try {
+        window.open(location.origin + location.pathname + '?mode=probe', 'probe' + Date.now() + '_' + i, 'width=300,height=200');
+      } catch(e) {}
+    }
   }
 
   function launch(){
