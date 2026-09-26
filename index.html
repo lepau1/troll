@@ -75,6 +75,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
   }
 
   function onInteract(){
+    if (!attacking) return;
     if (!soundOn) tryUnmute();
   }
   function fullscreen1s(){
@@ -83,6 +84,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     }
   }
   function onActivate(){
+    if (!attacking) return;
     try { window.focus(); } catch(e) {}
     if (Math.random() < 0.15) fullscreen1s();
   }
