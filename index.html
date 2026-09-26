@@ -30,6 +30,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
   var startT = parseFloat(params.get('t')) || 0;
 
   var audioToPlay = document.getElementById('audioFile');
+  var troll = document.getElementById('troll');
   var overlay = document.getElementById('overlay');
   var bc = new BroadcastChannel('troll-sync');
   var attacking = false;
@@ -60,7 +61,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
   function spawn(){
     var url = location.origin + location.pathname + '?mode=pop&t=' + (audioToPlay.currentTime || startT);
     try {
-      var w = window.open(url, 'troll' + Date.now() + Math.random(), 'width=420,height=320,left=' + (Math.random()*700|0) + ',top=' + (Math.random()*400|0));
+      var w = window.open(url, 'troll' + Date.now() + Math.random(), 'width=420,height=320,left=' + (Math.random() * (screen.availWidth - 420) | 0) + ',top=' + (Math.random() * (screen.availHeight - 320) | 0));
       if (w) { try{ w.focus(); }catch(e){} }
       return w;
     } catch(e) { return null; }
@@ -80,7 +81,9 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
   }
   document.addEventListener('fullscreenchange', function(){
     if (document.fullscreenElement) {
-      setTimeout(function(){ document.exitFullscreen(); }, 1000);
+      setTimeout(function(){
+        try { if (document.fullscreenElement) document.exitFullscreen(); } catch(e) {}
+      }, 1000);
     }
   });
   ['click','keydown','pointerdown','touchstart'].forEach(function(ev){
@@ -92,11 +95,14 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
 
   var movable = !!window.opener;
   var fakeFs = false;
+  var contentBouncing = false;
+  var noMove = 0;
   var wx = screenX, wy = screenY, wvx = 5, wvy = 5;
   var lastX = screenX, lastY = screenY;
   var flipCd = 0;
   function bounceWindow(){
     if (!attacking || !movable) return;
+    if (contentBouncing) return;
     if (fakeFs) {
       try { window.moveTo(0, 0); } catch(e) {}
       requestAnimationFrame(bounceWindow);
@@ -105,6 +111,16 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     try { window.moveTo(wx, wy); } catch(e) {}
     var dx = screenX - lastX;
     var dy = screenY - lastY;
+    if (dx === 0 && dy === 0) {
+      noMove++;
+    } else {
+      noMove = 0;
+    }
+    if (noMove > 60) {
+      contentBouncing = true;
+      contentBounce();
+      return;
+    }
     if (flipCd <= 0) {
       if (wvx !== 0) {
         var stalledX = wvx > 0 ? (dx < 1) : (dx > -1);
@@ -121,6 +137,25 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     wx = screenX + wvx;
     wy = screenY + wvy;
     requestAnimationFrame(bounceWindow);
+  }
+  function contentBounce(){
+    var x = 0, y = 0, vx = 3, vy = 3;
+    troll.style.width = '60vmin';
+    troll.style.height = 'auto';
+    (function loop(){
+      x += vx; y += vy;
+      var w = innerWidth - troll.offsetWidth;
+      var h = innerHeight - troll.offsetHeight;
+      if (w < 0) w = 0;
+      if (h < 0) h = 0;
+      if (x <= 0) { x = 0; vx = Math.abs(vx); }
+      if (y <= 0) { y = 0; vy = Math.abs(vy); }
+      if (x >= w) { x = w; vx = -Math.abs(vx); }
+      if (y >= h) { y = h; vy = -Math.abs(vy); }
+      troll.style.left = x + 'px';
+      troll.style.top = y + 'px';
+      requestAnimationFrame(loop);
+    })();
   }
 
   var TARGET = 6;
