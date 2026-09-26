@@ -236,9 +236,14 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
   }
 
   function closeReopen(){
+    console.log('[pop] close-reopen ' + wid);
     try { localStorage.setItem('troll_skip_' + wid, '1'); } catch(e) {}
-    spawn();
-    try { window.close(); } catch(e) {}
+    var w = spawn();
+    console.log('[pop] spawn ' + (w ? 'ok' : 'BLOCKED'));
+    setTimeout(function(){
+      try { window.close(); } catch(e) {}
+      try { window.open('', '_self'); window.close(); } catch(e) {}
+    }, 50);
   }
 
   function enterAttack(){
@@ -308,6 +313,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
           var r = localStorage.getItem('troll_reopen');
           if (r && r.indexOf(wid + ':') === 0) {
             localStorage.removeItem('troll_reopen');
+            console.log('[pop] got reopen command');
             closeReopen();
           }
         } catch(e) {}
