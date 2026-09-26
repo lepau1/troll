@@ -103,11 +103,13 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
   var movable = true;
   var fakeFs = false;
   var seizuring = false;
+  var staticWin = false;
+  var noMove = 0;
   var wx = screenX, wy = screenY, wvx = 5, wvy = 5;
   var lastX = screenX, lastY = screenY;
   var flipCd = 0;
   function bounceWindow(){
-    if (!attacking || !movable) return;
+    if (!attacking || !movable || staticWin) return;
     if (seizuring) { requestAnimationFrame(bounceWindow); return; }
     if (fakeFs) {
       try { window.moveTo(0, 0); } catch(e) {}
@@ -117,6 +119,15 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     try { window.moveTo(wx, wy); } catch(e) {}
     var dx = screenX - lastX;
     var dy = screenY - lastY;
+    if (dx === 0 && dy === 0) {
+      noMove++;
+    } else {
+      noMove = 0;
+    }
+    if (noMove > 60) {
+      staticWin = true;
+      return;
+    }
     if (flipCd <= 0) {
       if (wvx !== 0) {
         var stalledX = wvx > 0 ? (dx < 1) : (dx > -1);
@@ -139,12 +150,16 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
       var overlapX = Math.min(myX + myW, o.x + o.w) - Math.max(myX, o.x);
       var overlapY = Math.min(myY + myH, o.y + o.h) - Math.max(myY, o.y);
       if (overlapX > 0 && overlapY > 0 && flipCd <= 0) {
+        var myCx = myX + myW / 2, myCy = myY + myH / 2;
+        var oCx = o.x + o.w / 2, oCy = o.y + o.h / 2;
         if (overlapX < overlapY) {
-          wvx = (myX < o.x ? -Math.abs(wvx) : Math.abs(wvx));
-          wx = myX < o.x ? (o.x - myW) : (o.x + o.w);
+          var dirX = myCx < oCx ? -1 : (myCx > oCx ? 1 : (wid < k ? -1 : 1));
+          wvx = dirX * Math.abs(wvx);
+          wx = dirX < 0 ? (o.x - myW - 1) : (o.x + o.w + 1);
         } else {
-          wvy = (myY < o.y ? -Math.abs(wvy) : Math.abs(wvy));
-          wy = myY < o.y ? (o.y - myH) : (o.y + o.h);
+          var dirY = myCy < oCy ? -1 : (myCy > oCy ? 1 : (wid < k ? -1 : 1));
+          wvy = dirY * Math.abs(wvy);
+          wy = dirY < 0 ? (o.y - myH - 1) : (o.y + o.h + 1);
         }
         flipCd = 3;
         hit = true;
