@@ -85,11 +85,19 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
   var movable = true;
   var moveMode = 'dvd';
   var GRAVITY = 900;
-  var wx = Math.round(Math.random() * 400), wy = Math.round(Math.random() * 300);
+  var wx = Math.round(Math.random() * Math.max(1, screen.availWidth - 420)), wy = Math.round(Math.random() * Math.max(1, screen.availHeight - 320));
   var wvx = (Math.random() < 0.5 ? -1 : 1) * (150 + Math.random() * 200);
   var wvy = (Math.random() < 0.5 ? -1 : 1) * (150 + Math.random() * 200);
   var lastT = performance.now();
   var teamSized = false;
+  var baseW = 420, baseH = 320;
+  var squashUntil = 0;
+  var squashAxis = 'y';
+  var wasSquash = false;
+  function squash(axis){
+    squashUntil = Date.now() + 120;
+    squashAxis = axis;
+  }
   function enterGravity(){
     wvx = (Math.random() < 0.5 ? -1 : 1) * (80 + Math.random() * 120);
     wvy = -150 - Math.random() * 250;
@@ -183,17 +191,17 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
       wvy += GRAVITY * dt;
       wx += wvx * dt;
       wy += wvy * dt;
-      if (wx < 0) { wx = 0; wvx = Math.abs(wvx); }
-      if (wx > maxX) { wx = maxX; wvx = -Math.abs(wvx); }
-      if (wy > maxY) { wy = maxY; wvy = -wvy; }
-      if (wy < 0) { wy = 0; wvy = Math.abs(wvy); }
+      if (wx < 0) { wx = 0; wvx = Math.abs(wvx); squash('x'); }
+      if (wx > maxX) { wx = maxX; wvx = -Math.abs(wvx); squash('x'); }
+      if (wy > maxY) { wy = maxY; wvy = -wvy; squash('y'); }
+      if (wy < 0) { wy = 0; wvy = Math.abs(wvy); squash('y'); }
     } else {
       wx += wvx * dt;
       wy += wvy * dt;
-      if (wx < 0) { wx = 0; wvx = Math.abs(wvx); }
-      if (wy < 0) { wy = 0; wvy = Math.abs(wvy); }
-      if (wx > maxX) { wx = maxX; wvx = -Math.abs(wvx); }
-      if (wy > maxY) { wy = maxY; wvy = -Math.abs(wvy); }
+      if (wx < 0) { wx = 0; wvx = Math.abs(wvx); squash('x'); }
+      if (wy < 0) { wy = 0; wvy = Math.abs(wvy); squash('y'); }
+      if (wx > maxX) { wx = maxX; wvx = -Math.abs(wvx); squash('x'); }
+      if (wy > maxY) { wy = maxY; wvy = -Math.abs(wvy); squash('y'); }
     }
     try { window.moveTo(Math.round(wx), Math.round(wy)); } catch(e) {}
     requestAnimationFrame(bounceWindow);
@@ -352,9 +360,25 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
       setInterval(function(){
         if (moveMode === 'circle' || moveMode === 'border') return;
         try {
-          window.resizeTo(Math.round(280 + Math.random() * 240), Math.round(220 + Math.random() * 220));
+          baseW = Math.round(280 + Math.random() * 240);
+          baseH = Math.round(220 + Math.random() * 220);
+          window.resizeTo(baseW, baseH);
         } catch(e) {}
       }, 2500);
+      setInterval(function(){
+        try {
+          if (moveMode === 'circle' || moveMode === 'border') { wasSquash = false; return; }
+          if (Date.now() < squashUntil) {
+            wasSquash = true;
+            var f = 0.75;
+            if (squashAxis === 'y') window.resizeTo(Math.round(baseW * 1.3), Math.round(baseH * f));
+            else window.resizeTo(Math.round(baseW * f), Math.round(baseH * 1.3));
+          } else if (wasSquash) {
+            wasSquash = false;
+            window.resizeTo(baseW, baseH);
+          }
+        } catch(e) {}
+      }, 40);
       setInterval(function(){
         if (moveMode === 'circle' || moveMode === 'border') return;
         try {
