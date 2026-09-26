@@ -103,7 +103,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
   var wvx = (Math.random() < 0.5 ? -1 : 1) * (150 + Math.random() * 200);
   var wvy = (Math.random() < 0.5 ? -1 : 1) * (150 + Math.random() * 200);
   var lastT = performance.now();
-  var fc = 0;
+  var lastLogT = 0;
   function bounceWindow(){
     if (!attacking || !movable) return;
     if (seizuring) { requestAnimationFrame(bounceWindow); return; }
@@ -127,8 +127,8 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     if (wx > maxX) { wx = maxX; wvx = -Math.abs(wvx); }
     if (wy > maxY) { wy = maxY; wvy = -Math.abs(wvy); }
     try { window.moveTo(Math.round(wx), Math.round(wy)); } catch(e) {}
-    fc++;
-    if (fc % 60 === 0) {
+    if (now - lastLogT > 2000) {
+      lastLogT = now;
       console.log('[troll:' + mode + '] pos=(' + Math.round(wx) + ',' + Math.round(wy) + ') v=(' + Math.round(wvx) + ',' + Math.round(wvy) + ') avail=(' + screen.availWidth + ',' + screen.availHeight + ') outer=(' + outerWidth + ',' + outerHeight + ') max=(' + maxX + ',' + maxY + ')');
     }
     requestAnimationFrame(bounceWindow);
