@@ -97,12 +97,10 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
   var movable = true;
   var fakeFs = false;
   var seizuring = false;
-  var staticWin = false;
-  var noMove = 0;
   var wx = screenX, wy = screenY, wvx = 5, wvy = 5;
   var lastX = screenX, lastY = screenY;
   function bounceWindow(){
-    if (!attacking || !movable || staticWin) return;
+    if (!attacking || !movable) return;
     if (seizuring) { requestAnimationFrame(bounceWindow); return; }
     if (fakeFs) {
       try { window.moveTo(0, 0); } catch(e) {}
@@ -120,16 +118,6 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     if (cx > maxX) { cx = maxX; wvx = -Math.abs(wvx); }
     if (cy > maxY) { cy = maxY; wvy = -Math.abs(wvy); }
     try { window.moveTo(cx, cy); } catch(e) {}
-    if (screenX === lastX && screenY === lastY) {
-      noMove++;
-    } else {
-      noMove = 0;
-    }
-    lastX = screenX; lastY = screenY;
-    if (noMove > 120) {
-      staticWin = true;
-      return;
-    }
     requestAnimationFrame(bounceWindow);
   }
   function triggerSeizure(){
