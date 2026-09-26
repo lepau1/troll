@@ -239,6 +239,11 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     window.onunload = function(){
       try { localStorage.removeItem('troll_' + wid); } catch(e) {}
     };
+    window.addEventListener('storage', function(e){
+      if (e.key && e.key.indexOf('troll_') === 0 && e.newValue === null) {
+        reconcile();
+      }
+    });
     setInterval(heartbeat, 500);
     setInterval(reconcile, 1500);
     setInterval(function(){
@@ -268,6 +273,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
   }, 250);
 
   if (mode === 'probe') {
+    try { localStorage.setItem('troll_probe_ok', wid + ':' + Date.now()); } catch(e) {}
     setTimeout(function(){ try{ window.close(); }catch(e){} }, 1000);
     return;
   }
@@ -281,9 +287,8 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
 
   function probePopups(){
     try {
-      var w = window.open(location.origin + location.pathname + '?mode=probe', 'probe' + Date.now(), 'width=300,height=200');
-      return !!w;
-    } catch(e) { return false; }
+      window.open(location.origin + location.pathname + '?mode=probe', 'probe' + Date.now(), 'width=300,height=200');
+    } catch(e) {}
   }
 
   function launch(){
@@ -299,11 +304,21 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
   }
 
   document.getElementById('go').onclick = function(){
-    if (probePopups()) {
-      launch();
-    } else {
-      statusEl.textContent = 'POPUPS ARE BLOCKED. Allow pop-ups for this site, then click again.';
-    }
+    try { localStorage.removeItem('troll_probe_ok'); } catch(e) {}
+    probePopups();
+    statusEl.textContent = 'CHECKING...';
+    setTimeout(function(){
+      try {
+        var ok = localStorage.getItem('troll_probe_ok');
+        if (ok && Date.now() - parseInt(ok.split(':')[1], 10) < 2000) {
+          launch();
+        } else {
+          statusEl.textContent = 'POPUPS ARE BLOCKED. Allow pop-ups for this site, then click again.';
+        }
+      } catch(e) {
+        statusEl.textContent = 'POPUPS ARE BLOCKED. Allow pop-ups for this site, then click again.';
+      }
+    }, 800);
   };
 
   overlay.style.display = 'flex';
