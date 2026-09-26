@@ -102,7 +102,12 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
   var wvx = (Math.random() < 0.5 ? -1 : 1) * (150 + Math.random() * 200);
   var wvy = (Math.random() < 0.5 ? -1 : 1) * (150 + Math.random() * 200);
   var lastT = performance.now();
-  var lastLogT = 0;
+  var circleSized = false;
+  function circleActive(){
+    var s = 0;
+    try { s = parseInt(localStorage.getItem('troll_circle') || '0', 10); } catch(e) {}
+    return !!s && Date.now() - s < 5000;
+  }
   function circleFrame(){
     var now = Date.now();
     var start = parseInt(localStorage.getItem('troll_circle') || '0', 10);
@@ -116,12 +121,12 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     }
     alive.sort();
     var N = alive.length;
-    if (N < 2) return;
+    if (N < 1) return;
     var idx = alive.indexOf(wid);
     if (idx < 0) idx = 0;
     var cx = screen.availWidth / 2;
     var cy = screen.availHeight / 2;
-    var radius = Math.min(screen.availWidth, screen.availHeight) / 2 - 200;
+    var radius = Math.min(screen.availWidth, screen.availHeight) / 2 - 100;
     var angle = ((now - start) / 1000) * 0.8 + idx * (2 * Math.PI / N);
     var x = cx + radius * Math.cos(angle) - outerWidth / 2;
     var y = cy + radius * Math.sin(angle) - outerHeight / 2;
@@ -137,23 +142,24 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     var dt = (now - lastT) / 1000;
     lastT = now;
     if (dt > 0.05) dt = 0.05;
-    var circleStart = 0;
-    try { circleStart = parseInt(localStorage.getItem('troll_circle') || '0', 10); } catch(e) {}
-    if (circleStart && Date.now() - circleStart < 5000) {
+    if (circleActive()) {
+      if (!circleSized) {
+        circleSized = true;
+        try { window.resizeTo(300, 300); } catch(e) {}
+      }
       circleFrame();
       requestAnimationFrame(bounceWindow);
       return;
     }
+    circleSized = false;
     var maxX = screen.availWidth - outerWidth;
     var maxY = screen.availHeight - outerHeight;
     if (maxX < 50) maxX = 1000;
     if (maxY < 50) maxY = 700;
     if (moveMode === 'gravity') {
-      wx += wvx * dt;
-      if (wx < 0) { wx = 0; wvx = Math.abs(wvx); }
-      if (wx > maxX) { wx = maxX; wvx = -Math.abs(wvx); }
-      wy += Math.abs(wvy) * dt;
-      if (wy > maxY) { wy = maxY; }
+      wy += wvy * dt;
+      if (wy > maxY) { wy = maxY; wvy = -Math.abs(wvy); }
+      if (wy < 0) { wy = 0; wvy = Math.abs(wvy); }
     } else {
       wx += wvx * dt;
       wy += wvy * dt;
@@ -163,10 +169,6 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
       if (wy > maxY) { wy = maxY; wvy = -Math.abs(wvy); }
     }
     try { window.moveTo(Math.round(wx), Math.round(wy)); } catch(e) {}
-    if (now - lastLogT > 2000) {
-      lastLogT = now;
-      console.log('[troll:' + mode + '] pos=(' + Math.round(wx) + ',' + Math.round(wy) + ') v=(' + Math.round(wvx) + ',' + Math.round(wvy) + ') avail=(' + screen.availWidth + ',' + screen.availHeight + ') outer=(' + outerWidth + ',' + outerHeight + ') max=(' + maxX + ',' + maxY + ')');
-    }
     requestAnimationFrame(bounceWindow);
   }
   function triggerSeizure(){
@@ -188,20 +190,6 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
 
   var TARGET = 6;
   var wid = 't' + Date.now() + '_' + Math.floor(Math.random() * 1e6);
-
-  function amOldest(){
-    var oldest = wid;
-    var now = Date.now();
-    for (var i = 0; i < localStorage.length; i++) {
-      var k = localStorage.key(i);
-      if (k && k.indexOf('troll_') === 0) {
-        var w = k.substring(6);
-        var ts = parseInt(localStorage.getItem(k), 10);
-        if (!isNaN(ts) && now - ts <= 8000 && w < oldest) oldest = w;
-      }
-    }
-    return oldest === wid;
-  }
 
   function heartbeat(){
     try { localStorage.setItem('troll_' + wid, Date.now()); } catch(e) {}
@@ -240,74 +228,115 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     } catch(e) {}
   }
 
+  function pickRandomPopup(){
+    var alive = [];
+    var now = Date.now();
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && k.indexOf('troll_') === 0) {
+        var ts = parseInt(localStorage.getItem(k), 10);
+        if (!isNaN(ts) && now - ts <= 8000) alive.push(k.substring(6));
+      }
+    }
+    if (alive.length === 0) return null;
+    return alive[Math.floor(Math.random() * alive.length)];
+  }
+
+  function closeReopen(){
+    try { localStorage.setItem('troll_skip_' + wid, '1'); } catch(e) {}
+    spawn();
+    try { window.close(); } catch(e) {}
+  }
+
   function enterAttack(){
     if (attacking) return;
     attacking = true;
     overlay.style.display = 'none';
-    console.log('[troll:' + mode + '] ATTACK start, wid=' + wid + ' movable=' + movable + ' avail=(' + screen.availWidth + ',' + screen.availHeight + ') outer=(' + outerWidth + ',' + outerHeight + ') start=(' + wx + ',' + wy + ')');
     audioToPlay.currentTime = startT;
     startMusic();
-    bounceWindow();
-    try { localStorage.setItem('troll_' + wid, Date.now()); } catch(e) {}
-    window.onbeforeunload = function(){
-      try {
-        var w = parseInt(localStorage.getItem('twant'), 10);
-        localStorage.setItem('twant', (isNaN(w) ? TARGET : w) + 1);
-        localStorage.removeItem('troll_' + wid);
-      } catch(e) {}
-    };
-    window.onunload = function(){
-      try { localStorage.removeItem('troll_' + wid); } catch(e) {}
-    };
-    window.addEventListener('storage', function(e){
-      if (e.key && e.key.indexOf('troll_') === 0 && e.newValue === null) {
-        reconcile();
-      }
-    });
-    setInterval(heartbeat, 500);
-    setInterval(reconcile, 600);
-    setInterval(function(){
-      try {
-        if (Math.random() < 0.3) window.focus();
-        if (Math.random() < 0.08) triggerSeizure();
-        if (Math.random() < 0.2) wvx = -wvx;
-        if (Math.random() < 0.2) wvy = -wvy;
-        if (Math.random() < 0.25) {
-          var sp = 150 + Math.random() * 300;
-          wvx = (wvx < 0 ? -1 : 1) * sp;
-          wvy = (wvy < 0 ? -1 : 1) * sp;
+    if (mode === 'pop') {
+      bounceWindow();
+      try { localStorage.setItem('troll_' + wid, Date.now()); } catch(e) {}
+      window.onbeforeunload = function(){
+        try {
+          var skip = localStorage.getItem('troll_skip_' + wid);
+          if (!skip) {
+            var w = parseInt(localStorage.getItem('twant'), 10);
+            localStorage.setItem('twant', (isNaN(w) ? TARGET : w) + 1);
+          }
+          localStorage.removeItem('troll_skip_' + wid);
+          localStorage.removeItem('troll_' + wid);
+        } catch(e) {}
+      };
+      window.onunload = function(){
+        try { localStorage.removeItem('troll_' + wid); } catch(e) {}
+      };
+      window.addEventListener('storage', function(e){
+        if (e.key && e.key.indexOf('troll_') === 0 && e.newValue === null) {
+          reconcile();
         }
-      } catch(e) {}
-    }, 800);
-    setInterval(function(){
-      if (amOldest()) {
-        if (Math.random() < 0.05) {
-          var cur = '';
-          try { cur = localStorage.getItem('troll_mode') || 'dvd'; } catch(e) {}
-          try { localStorage.setItem('troll_mode', cur === 'dvd' ? 'gravity' : 'dvd'); } catch(e) {}
-        }
-        if (Math.random() < 0.05) {
-          try { localStorage.setItem('troll_circle', Date.now()); } catch(e) {}
-        }
-      }
-    }, 1000);
-    setInterval(function(){
-      try { moveMode = localStorage.getItem('troll_mode') || 'dvd'; } catch(e) {}
-    }, 300);
-    setInterval(function(){
-      try {
-        window.resizeTo(Math.round(280 + Math.random() * 240), Math.round(220 + Math.random() * 220));
-      } catch(e) {}
-    }, 2500);
-    setInterval(function(){
-      try {
-        if (Math.random() < 0.2) {
-          wx = Math.round(Math.random() * (screen.availWidth - outerWidth));
-          wy = Math.round(Math.random() * (screen.availHeight - outerHeight));
-          window.moveTo(wx, wy);
-        }
-      } catch(e) {}
-    }, 3000);
+      });
+      setInterval(heartbeat, 500);
+      setInterval(reconcile, 600);
+      setInterval(function(){
+        if (circleActive()) return;
+        try {
+          if (Math.random() < 0.3) window.focus();
+          if (Math.random() < 0.08) triggerSeizure();
+          if (Math.random() < 0.2) wvx = -wvx;
+          if (Math.random() < 0.2) wvy = -wvy;
+          if (Math.random() < 0.25) {
+            var sp = 150 + Math.random() * 300;
+            wvx = (wvx < 0 ? -1 : 1) * sp;
+            wvy = (wvy < 0 ? -1 : 1) * sp;
+          }
+        } catch(e) {}
+      }, 800);
+      setInterval(function(){
+        try { moveMode = localStorage.getItem('troll_mode') || 'dvd'; } catch(e) {}
+      }, 300);
+      setInterval(function(){
+        if (circleActive()) return;
+        try {
+          window.resizeTo(Math.round(280 + Math.random() * 240), Math.round(220 + Math.random() * 220));
+        } catch(e) {}
+      }, 2500);
+      setInterval(function(){
+        if (circleActive()) return;
+        try {
+          if (Math.random() < 0.2) {
+            wx = Math.round(Math.random() * (screen.availWidth - outerWidth));
+            wy = Math.round(Math.random() * (screen.availHeight - outerHeight));
+            window.moveTo(wx, wy);
+          }
+        } catch(e) {}
+      }, 3000);
+      setInterval(function(){
+        try {
+          var r = localStorage.getItem('troll_reopen');
+          if (r && r.indexOf(wid + ':') === 0) {
+            localStorage.removeItem('troll_reopen');
+            closeReopen();
+          }
+        } catch(e) {}
+      }, 400);
+    } else {
+      setInterval(function(){
+        try {
+          if (Math.random() < 0.05) {
+            var cur = localStorage.getItem('troll_mode') || 'dvd';
+            localStorage.setItem('troll_mode', cur === 'dvd' ? 'gravity' : 'dvd');
+          }
+          if (Math.random() < 0.05) {
+            localStorage.setItem('troll_circle', Date.now());
+          }
+          if (Math.random() < 0.2) {
+            var t = pickRandomPopup();
+            if (t) localStorage.setItem('troll_reopen', t + ':' + Date.now());
+          }
+        } catch(e) {}
+      }, 1000);
+    }
   }
 
   bc.onmessage = function(e){
