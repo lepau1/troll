@@ -188,6 +188,22 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     try { localStorage.setItem('troll_' + wid, Date.now()); } catch(e) {}
   }
 
+  function getPending(){
+    var p = {count: 0, ts: 0};
+    try {
+      var s = localStorage.getItem('tpending');
+      if (s) {
+        var parts = s.split(':');
+        p.count = parseInt(parts[0], 10) || 0;
+        p.ts = parseInt(parts[1], 10) || 0;
+      }
+    } catch(e) {}
+    return p;
+  }
+  function setPending(count, ts){
+    try { localStorage.setItem('tpending', count + ':' + (ts || Date.now())); } catch(e) {}
+  }
+
   function reconcile(){
     if (!attacking) return;
     try {
@@ -208,12 +224,16 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
           }
         }
       }
+      var p = getPending();
+      var pending = (p.count > 0 && now - p.ts < 3000) ? p.count : 0;
+      if (p.count > 0 && pending === 0) setPending(0, 0);
       var want = parseInt(localStorage.getItem('twant'), 10);
       if (isNaN(want)) want = TARGET;
-      var deficit = want - alive;
+      var deficit = want - alive - pending;
       if (deficit > 0) {
         localStorage.setItem('tlock', now);
         var spawnCount = Math.min(deficit, 6);
+        setPending(pending + spawnCount, now);
         for (var j = 0; j < spawnCount; j++) {
           (function(n){ setTimeout(function(){ spawn(); }, n * 200); })(j);
         }
@@ -238,6 +258,8 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
   function closeReopen(){
     console.log('[pop] close-reopen ' + wid);
     try { localStorage.setItem('troll_skip_' + wid, '1'); } catch(e) {}
+    var p = getPending();
+    setPending(p.count + 1, Date.now());
     var w = spawn();
     console.log('[pop] spawn ' + (w ? 'ok' : 'BLOCKED'));
     setTimeout(function(){
@@ -254,6 +276,8 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     startMusic();
     if (mode === 'pop') {
       bounceWindow();
+      var pArrive = getPending();
+      if (pArrive.count > 0) setPending(pArrive.count - 1, pArrive.ts);
       try { localStorage.setItem('troll_' + wid, Date.now()); } catch(e) {}
       window.onbeforeunload = function(){
         try {
