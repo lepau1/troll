@@ -202,10 +202,12 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     if (moveMode === 'gravity') {
       wx += wvx * dt;
       wy += wvy * dt;
-      if (wx < 0) { wx = 0; wvx = Math.abs(wvx); }
-      if (wx > maxX) { wx = maxX; wvx = -Math.abs(wvx); }
-      if (wy > maxY) { wy = maxY; wvy = -Math.abs(wvy); }
-      if (wy < 0) { wy = 0; wvy = Math.abs(wvy); }
+      var gBounce = false;
+      if (wx < 0) { wx = 0; gBounce = true; }
+      if (wx > maxX) { wx = maxX; gBounce = true; }
+      if (wy < 0) { wy = 0; gBounce = true; }
+      if (wy > maxY) { wy = maxY; gBounce = true; }
+      if (gBounce) { wvx = -wvx; wvy = -wvy; }
     } else {
       wx += wvx * dt;
       wy += wvy * dt;
@@ -362,8 +364,9 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
             moveMode = nm;
             if (moveMode === 'gravity') {
               var split = 80 + Math.random() * 120;
-              wvx = (Math.random() < 0.5 ? -1 : 1) * split;
-              wvy = (Math.random() < 0.5 ? -1 : 1) * (250 - split);
+              var dir = Math.random() < 0.5 ? 1 : -1;
+              wvx = dir * split;
+              wvy = -dir * (250 - split);
             }
           }
         } catch(e) {}
