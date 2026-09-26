@@ -96,7 +96,6 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
   });
 
   var movable = true;
-  var fakeFs = false;
   var seizuring = false;
   var wx = Math.round(Math.random() * 400), wy = Math.round(Math.random() * 300);
   var wvx = (Math.random() < 0.5 ? -1 : 1) * (150 + Math.random() * 200);
@@ -106,11 +105,6 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
   function bounceWindow(){
     if (!attacking || !movable) return;
     if (seizuring) { requestAnimationFrame(bounceWindow); return; }
-    if (fakeFs) {
-      try { window.moveTo(0, 0); } catch(e) {}
-      requestAnimationFrame(bounceWindow);
-      return;
-    }
     var now = performance.now();
     var dt = (now - lastT) / 1000;
     lastT = now;
@@ -248,30 +242,6 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     setInterval(heartbeat, 500);
     setInterval(reconcile, 1500);
     setInterval(function(){
-      if (!movable || fakeFs) return;
-      var now = Date.now();
-      var lock = '';
-      try { lock = localStorage.getItem('fslock') || ''; } catch(e) {}
-      if (lock && now - parseInt(lock.split(':')[1] || '0', 10) < 1500) return;
-      if (Math.random() < 0.06) {
-        fakeFs = true;
-        try {
-          localStorage.setItem('fslock', wid + ':' + now);
-          window.resizeTo(screen.availWidth, screen.availHeight);
-          window.moveTo(0, 0);
-        } catch(e) {}
-        setTimeout(function(){
-          fakeFs = false;
-          wx = 0; wy = 0;
-          try {
-            localStorage.removeItem('fslock');
-            window.resizeTo(Math.round(200 + Math.random() * 600), Math.round(200 + Math.random() * 500));
-          } catch(e) {}
-        }, 1000);
-      }
-    }, 2000);
-    setInterval(function(){
-      if (fakeFs) return;
       try {
         if (Math.random() < 0.3) window.focus();
         if (Math.random() < 0.08) triggerSeizure();
@@ -284,12 +254,6 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
         }
       } catch(e) {}
     }, 800);
-    setInterval(function(){
-      if (!movable || fakeFs) return;
-      try {
-        window.resizeTo(Math.round(200 + Math.random() * 600), Math.round(200 + Math.random() * 500));
-      } catch(e) {}
-    }, 1500);
   }
 
   bc.onmessage = function(e){
