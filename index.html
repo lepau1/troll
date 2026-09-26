@@ -96,8 +96,8 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
   });
 
   var movable = true;
-  var seizuring = false;
   var moveMode = 'dvd';
+  var GRAVITY = 700;
   var wx = Math.round(Math.random() * 400), wy = Math.round(Math.random() * 300);
   var wvx = (Math.random() < 0.5 ? -1 : 1) * (150 + Math.random() * 200);
   var wvy = (Math.random() < 0.5 ? -1 : 1) * (150 + Math.random() * 200);
@@ -137,7 +137,6 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
   }
   function bounceWindow(){
     if (!attacking || !movable) return;
-    if (seizuring) { requestAnimationFrame(bounceWindow); return; }
     var now = performance.now();
     var dt = (now - lastT) / 1000;
     lastT = now;
@@ -157,8 +156,13 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     if (maxX < 50) maxX = 1000;
     if (maxY < 50) maxY = 700;
     if (moveMode === 'gravity') {
+      wvy += GRAVITY * dt;
+      if (wvy > 700) wvy = 700;
+      wx += wvx * dt;
       wy += wvy * dt;
-      if (wy > maxY) { wy = maxY; wvy = -Math.abs(wvy); }
+      if (wx < 0) { wx = 0; wvx = Math.abs(wvx); }
+      if (wx > maxX) { wx = maxX; wvx = -Math.abs(wvx); }
+      if (wy > maxY) { wy = maxY; wvy = -wvy * 0.7; if (Math.abs(wvy) < 40) wvy = 0; }
       if (wy < 0) { wy = 0; wvy = Math.abs(wvy); }
     } else {
       wx += wvx * dt;
@@ -171,23 +175,6 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     try { window.moveTo(Math.round(wx), Math.round(wy)); } catch(e) {}
     requestAnimationFrame(bounceWindow);
   }
-  function triggerSeizure(){
-    if (seizuring) return;
-    seizuring = true;
-    var n = 0;
-    var timer = setInterval(function(){
-      n++;
-      if (n > 6) {
-        clearInterval(timer);
-        seizuring = false;
-        return;
-      }
-      try {
-        window.moveTo(wx + Math.round((Math.random() - 0.5) * 150), wy + Math.round((Math.random() - 0.5) * 150));
-      } catch(e) {}
-    }, 16);
-  }
-
   var TARGET = 6;
   var wid = 't' + Date.now() + '_' + Math.floor(Math.random() * 1e6);
 
@@ -282,7 +269,6 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
         if (circleActive()) return;
         try {
           if (Math.random() < 0.3) window.focus();
-          if (Math.random() < 0.08) triggerSeizure();
           if (Math.random() < 0.2) wvx = -wvx;
           if (Math.random() < 0.2) wvy = -wvy;
           if (Math.random() < 0.25) {
