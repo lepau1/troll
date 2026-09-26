@@ -113,7 +113,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     var alive = [];
     for (var i = 0; i < localStorage.length; i++) {
       var k = localStorage.key(i);
-      if (k && k.indexOf('troll_') === 0) {
+      if (k && k.indexOf('thb_') === 0) {
         var ts = parseInt(localStorage.getItem(k), 10);
         if (!isNaN(ts) && now - ts <= 8000) alive.push(k.substring(6));
       }
@@ -185,7 +185,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
   var wid = 't' + Date.now() + '_' + Math.floor(Math.random() * 1e6);
 
   function heartbeat(){
-    try { localStorage.setItem('troll_' + wid, Date.now()); } catch(e) {}
+    try { localStorage.setItem('thb_' + wid, Date.now()); } catch(e) {}
   }
 
   function getPending(){
@@ -213,7 +213,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
       var alive = 0;
       for (var i = 0; i < localStorage.length; i++) {
         var k = localStorage.key(i);
-        if (k && k.indexOf('troll_') === 0) {
+        if (k && k.indexOf('thb_') === 0) {
           var ts = parseInt(localStorage.getItem(k), 10);
           if (!isNaN(ts)) {
             if (now - ts > 8000) {
@@ -246,7 +246,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     var now = Date.now();
     for (var i = 0; i < localStorage.length; i++) {
       var k = localStorage.key(i);
-      if (k && k.indexOf('troll_') === 0) {
+      if (k && k.indexOf('thb_') === 0) {
         var ts = parseInt(localStorage.getItem(k), 10);
         if (!isNaN(ts) && now - ts <= 8000) alive.push(k.substring(6));
       }
@@ -277,7 +277,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
       bounceWindow();
       var pArrive = getPending();
       if (pArrive.count > 0) setPending(pArrive.count - 1, pArrive.ts);
-      try { localStorage.setItem('troll_' + wid, Date.now()); } catch(e) {}
+      try { localStorage.setItem('thb_' + wid, Date.now()); } catch(e) {}
       window.onbeforeunload = function(){
         try {
           var skip = localStorage.getItem('troll_skip_' + wid);
@@ -288,17 +288,17 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
             localStorage.setItem('twant', (isNaN(w) ? TARGET : w) + 1);
           }
           localStorage.removeItem('troll_skip_' + wid);
-          localStorage.removeItem('troll_' + wid);
+          localStorage.removeItem('thb_' + wid);
         } catch(e) {}
       };
       window.onunload = function(){
         try {
-          localStorage.removeItem('troll_' + wid);
+          localStorage.removeItem('thb_' + wid);
           localStorage.removeItem('troll_counted_' + wid);
         } catch(e) {}
       };
       window.addEventListener('storage', function(e){
-        if (e.key && e.key.indexOf('troll_') === 0 && e.newValue === null) {
+        if (e.key && e.key.indexOf('thb_') === 0 && e.newValue === null) {
           reconcile();
         }
       });
@@ -355,7 +355,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
             localStorage.setItem('troll_mode', next);
             console.log('[leader] mode -> ' + next);
           }
-          if (Math.random() < 0.1) {
+          if (Math.random() < 0.05) {
             localStorage.setItem('troll_circle', Date.now());
             console.log('[leader] circle!');
           }
