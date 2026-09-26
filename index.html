@@ -107,7 +107,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     try { s = parseInt(localStorage.getItem('troll_circle') || '0', 10); } catch(e) {}
     return !!s && Date.now() - s < 5000;
   }
-  function circleFrame(){
+  function circleFrame(dt){
     var now = Date.now();
     var start = parseInt(localStorage.getItem('troll_circle') || '0', 10);
     var alive = [];
@@ -127,12 +127,21 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     var cy = screen.availHeight / 2;
     var radius = Math.min(screen.availWidth, screen.availHeight) / 2 - 100;
     var angle = ((now - start) / 1000) * 0.8 + idx * (2 * Math.PI / N);
-    var x = cx + radius * Math.cos(angle) - outerWidth / 2;
-    var y = cy + radius * Math.sin(angle) - outerHeight / 2;
-    x = Math.max(0, Math.min(screen.availWidth - outerWidth, x));
-    y = Math.max(0, Math.min(screen.availHeight - outerHeight, y));
-    wx = x; wy = y;
-    try { window.moveTo(Math.round(x), Math.round(y)); } catch(e) {}
+    var tx = cx + radius * Math.cos(angle) - outerWidth / 2;
+    var ty = cy + radius * Math.sin(angle) - outerHeight / 2;
+    tx = Math.max(0, Math.min(screen.availWidth - outerWidth, tx));
+    ty = Math.max(0, Math.min(screen.availHeight - outerHeight, ty));
+    var dx = tx - wx;
+    var dy = ty - wy;
+    var dist = Math.sqrt(dx * dx + dy * dy);
+    var step = 600 * dt;
+    if (dist <= step || dist < 1) {
+      wx = tx; wy = ty;
+    } else {
+      wx += dx / dist * step;
+      wy += dy / dist * step;
+    }
+    try { window.moveTo(Math.round(wx), Math.round(wy)); } catch(e) {}
   }
   function bounceWindow(){
     if (!attacking || !movable) return;
@@ -145,7 +154,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
         circleSized = true;
         try { window.resizeTo(300, 300); } catch(e) {}
       }
-      circleFrame();
+      circleFrame(dt);
       requestAnimationFrame(bounceWindow);
       return;
     }
