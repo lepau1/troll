@@ -115,7 +115,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
       var k = localStorage.key(i);
       if (k && k.indexOf('thb_') === 0) {
         var ts = parseInt(localStorage.getItem(k), 10);
-        if (!isNaN(ts) && now - ts <= 8000) alive.push(k.substring(6));
+        if (!isNaN(ts) && now - ts <= 8000) alive.push(k.substring(4));
       }
     }
     alive.sort();
@@ -248,7 +248,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
       var k = localStorage.key(i);
       if (k && k.indexOf('thb_') === 0) {
         var ts = parseInt(localStorage.getItem(k), 10);
-        if (!isNaN(ts) && now - ts <= 8000) alive.push(k.substring(6));
+        if (!isNaN(ts) && now - ts <= 8000) alive.push(k.substring(4));
       }
     }
     if (alive.length === 0) return null;
@@ -349,7 +349,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     } else {
       setInterval(function(){
         try {
-          if (Math.random() < 0.1) {
+          if (Math.random() < 0.05) {
             var cur = localStorage.getItem('troll_mode') || 'dvd';
             var next = cur === 'dvd' ? 'gravity' : 'dvd';
             localStorage.setItem('troll_mode', next);
@@ -359,7 +359,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
             localStorage.setItem('troll_circle', Date.now());
             console.log('[leader] circle!');
           }
-          if (Math.random() < 0.25) {
+          if (Math.random() < 0.2) {
             var t = pickRandomPopup();
             if (t) {
               localStorage.setItem('troll_reopen', t + ':' + Date.now());
