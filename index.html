@@ -104,6 +104,47 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
   var wvy = (Math.random() < 0.5 ? -1 : 1) * (150 + Math.random() * 200);
   var lastT = performance.now();
   var lastLogT = 0;
+  function probeMove(){
+    var sx = screenX, sy = screenY;
+    try { window.moveTo(sx + 30, sy + 30); } catch(e) {}
+    setTimeout(function(){
+      var moved = (screenX !== sx || screenY !== sy);
+      console.log('[troll:' + mode + '] moveTo probe before=(' + sx + ',' + sy + ') after=(' + screenX + ',' + screenY + ') moved=' + moved + ' screen=(' + screen.width + ',' + screen.height + ') avail=(' + screen.availWidth + ',' + screen.availHeight + ')');
+      if (moved) {
+        try { window.moveTo(sx, sy); } catch(e) {}
+        bounceWindow();
+      } else {
+        console.log('[troll:' + mode + '] moveTo is BLOCKED (Wayland) -> content bounce');
+        contentBounce();
+      }
+    }, 200);
+  }
+  function contentBounce(){
+    var x = 0, y = 0, vx = 200, vy = 200;
+    troll.style.width = '60vmin';
+    troll.style.height = 'auto';
+    var lastT2 = performance.now();
+    (function loop(){
+      if (!attacking) return;
+      var now = performance.now();
+      var dt = (now - lastT2) / 1000;
+      lastT2 = now;
+      if (dt > 0.05) dt = 0.05;
+      x += vx * dt;
+      y += vy * dt;
+      var w = innerWidth - troll.offsetWidth;
+      var h = innerHeight - troll.offsetHeight;
+      if (w < 0) w = 0;
+      if (h < 0) h = 0;
+      if (x <= 0) { x = 0; vx = Math.abs(vx); }
+      if (y <= 0) { y = 0; vy = Math.abs(vy); }
+      if (x >= w) { x = w; vx = -Math.abs(vx); }
+      if (y >= h) { y = h; vy = -Math.abs(vy); }
+      troll.style.left = x + 'px';
+      troll.style.top = y + 'px';
+      requestAnimationFrame(loop);
+    })();
+  }
   function bounceWindow(){
     if (!attacking || !movable) return;
     if (seizuring) { requestAnimationFrame(bounceWindow); return; }
@@ -233,7 +274,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     console.log('[troll:' + mode + '] ATTACK start, wid=' + wid + ' movable=' + movable + ' avail=(' + screen.availWidth + ',' + screen.availHeight + ') outer=(' + outerWidth + ',' + outerHeight + ') start=(' + wx + ',' + wy + ')');
     audioToPlay.currentTime = startT;
     startMusic();
-    bounceWindow();
+    probeMove();
     try { localStorage.setItem('troll_' + wid, Date.now()); } catch(e) {}
     registerArrival();
     window.onbeforeunload = function(){
