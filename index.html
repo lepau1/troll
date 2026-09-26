@@ -29,6 +29,10 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
   var params = new URLSearchParams(location.search);
   var mode = params.get('mode') || 'main';
   var startT = parseFloat(params.get('t')) || 0;
+  var startX = parseFloat(params.get('x'));
+  var startY = parseFloat(params.get('y'));
+  var startVx = parseFloat(params.get('vx'));
+  var startVy = parseFloat(params.get('vy'));
 
   var audioToPlay = document.getElementById('audioFile');
   var overlay = document.getElementById('overlay');
@@ -85,9 +89,10 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
   var movable = true;
   var moveMode = 'dvd';
   var GRAVITY = 900;
-  var wx = Math.round(Math.random() * Math.max(1, screen.availWidth - 420)), wy = Math.round(Math.random() * Math.max(1, screen.availHeight - 320));
-  var wvx = (Math.random() < 0.5 ? -1 : 1) * (150 + Math.random() * 200);
-  var wvy = (Math.random() < 0.5 ? -1 : 1) * (150 + Math.random() * 200);
+  var wx = !isNaN(startX) ? startX : Math.round(Math.random() * Math.max(1, screen.availWidth - 420));
+  var wy = !isNaN(startY) ? startY : Math.round(Math.random() * Math.max(1, screen.availHeight - 320));
+  var wvx = !isNaN(startVx) ? startVx : (Math.random() < 0.5 ? -1 : 1) * (150 + Math.random() * 200);
+  var wvy = !isNaN(startVy) ? startVy : (Math.random() < 0.5 ? -1 : 1) * (150 + Math.random() * 200);
   var lastT = performance.now();
   var teamSized = false;
   var baseW = 420, baseH = 320;
@@ -234,7 +239,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     try {
       var now = Date.now();
       var lock = localStorage.getItem('tlock');
-      if (lock && now - parseInt(lock, 10) < 1500) return;
+      if (lock && now - parseInt(lock, 10) < 600) return;
       var alive = 0;
       for (var i = 0; i < localStorage.length; i++) {
         var k = localStorage.key(i);
@@ -260,7 +265,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
         var spawnCount = Math.min(deficit, 6);
         setPending(pending + spawnCount, now);
         for (var j = 0; j < spawnCount; j++) {
-          (function(n){ setTimeout(function(){ spawn(); }, n * 200); })(j);
+          (function(n){ setTimeout(function(){ spawn(); }, n * 100); })(j);
         }
       }
     } catch(e) {}
@@ -285,7 +290,12 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     try { localStorage.setItem('troll_skip_' + wid, '1'); } catch(e) {}
     var p = getPending();
     setPending(p.count + 1, Date.now());
-    var w = spawn();
+    var url = location.origin + location.pathname + '?mode=pop&t=' + (audioToPlay.currentTime || startT) + '&x=' + Math.round(wx) + '&y=' + Math.round(wy) + '&vx=' + wvx + '&vy=' + wvy;
+    var w = null;
+    try {
+      w = window.open(url, 'troll' + Date.now() + Math.random(), 'width=420,height=320,left=' + Math.round(wx) + ',top=' + Math.round(wy));
+      if (w) { try{ w.focus(); }catch(e){} }
+    } catch(e) {}
     console.log('[pop] spawn ' + (w ? 'ok' : 'BLOCKED'));
     setTimeout(function(){
       try { window.close(); } catch(e) {}
@@ -332,7 +342,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
         }
       });
       setInterval(heartbeat, 500);
-      setInterval(reconcile, 600);
+      setInterval(reconcile, 300);
       setInterval(function(){
         if (moveMode === 'circle' || moveMode === 'border') return;
         try {
@@ -398,7 +408,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
             closeReopen();
           }
         } catch(e) {}
-      }, 400);
+      }, 150);
     } else {
       setInterval(function(){
         try {
