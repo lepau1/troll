@@ -101,15 +101,19 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
   var wvx = (Math.random() < 0.5 ? -1 : 1) * (150 + Math.random() * 200);
   var wvy = (Math.random() < 0.5 ? -1 : 1) * (150 + Math.random() * 200);
   var lastT = performance.now();
-  var circleSized = false;
+  var teamSized = false;
   function circleActive(){
     var s = 0;
     try { s = parseInt(localStorage.getItem('troll_circle') || '0', 10); } catch(e) {}
     return !!s && Date.now() - s < 5000;
   }
-  function circleFrame(dt){
+  function borderActive(){
+    var s = 0;
+    try { s = parseInt(localStorage.getItem('troll_border') || '0', 10); } catch(e) {}
+    return !!s && Date.now() - s < 5000;
+  }
+  function teamList(){
     var now = Date.now();
-    var start = parseInt(localStorage.getItem('troll_circle') || '0', 10);
     var alive = [];
     for (var i = 0; i < localStorage.length; i++) {
       var k = localStorage.key(i);
@@ -119,18 +123,9 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
       }
     }
     alive.sort();
-    var N = alive.length;
-    if (N < 1) return;
-    var idx = alive.indexOf(wid);
-    if (idx < 0) idx = 0;
-    var cx = screen.availWidth / 2;
-    var cy = screen.availHeight / 2;
-    var radius = Math.min(screen.availWidth, screen.availHeight) / 2 - 100;
-    var angle = ((now - start) / 1000) * 0.8 + idx * (2 * Math.PI / N);
-    var tx = cx + radius * Math.cos(angle) - outerWidth / 2;
-    var ty = cy + radius * Math.sin(angle) - outerHeight / 2;
-    tx = Math.max(0, Math.min(screen.availWidth - outerWidth, tx));
-    ty = Math.max(0, Math.min(screen.availHeight - outerHeight, ty));
+    return alive;
+  }
+  function moveToward(tx, ty, dt){
     var dx = tx - wx;
     var dy = ty - wy;
     var dist = Math.sqrt(dx * dx + dy * dy);
@@ -143,22 +138,63 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     }
     try { window.moveTo(Math.round(wx), Math.round(wy)); } catch(e) {}
   }
+  function circleFrame(dt){
+    var now = Date.now();
+    var start = parseInt(localStorage.getItem('troll_circle') || '0', 10);
+    var alive = teamList();
+    var N = alive.length;
+    if (N < 1) return;
+    var idx = alive.indexOf(wid);
+    if (idx < 0) idx = 0;
+    var cx = screen.availWidth / 2;
+    var cy = screen.availHeight / 2;
+    var radius = Math.min(screen.availWidth, screen.availHeight) / 2 - 100;
+    var angle = ((now - start) / 1000) * 0.8 + idx * (2 * Math.PI / N);
+    var tx = cx + radius * Math.cos(angle) - outerWidth / 2;
+    var ty = cy + radius * Math.sin(angle) - outerHeight / 2;
+    tx = Math.max(0, Math.min(screen.availWidth - outerWidth, tx));
+    ty = Math.max(0, Math.min(screen.availHeight - outerHeight, ty));
+    moveToward(tx, ty, dt);
+  }
+  function borderFrame(dt){
+    var now = Date.now();
+    var start = parseInt(localStorage.getItem('troll_border') || '0', 10);
+    var alive = teamList();
+    var N = alive.length;
+    if (N < 1) return;
+    var idx = alive.indexOf(wid);
+    if (idx < 0) idx = 0;
+    var W = screen.availWidth - outerWidth;
+    var H = screen.availHeight - outerHeight;
+    if (W < 1) W = 1;
+    if (H < 1) H = 1;
+    var perimeter = 2 * (W + H);
+    var pos = ((now - start) / 1000 * 250 + idx * (perimeter / N)) % perimeter;
+    if (pos < 0) pos += perimeter;
+    var tx, ty;
+    if (pos < W) { tx = pos; ty = 0; }
+    else if (pos < W + H) { tx = W; ty = pos - W; }
+    else if (pos < W + H + W) { tx = W - (pos - W - H); ty = H; }
+    else { tx = 0; ty = H - (pos - W - H - W); }
+    moveToward(tx, ty, dt);
+  }
   function bounceWindow(){
     if (!attacking || !movable) return;
     var now = performance.now();
     var dt = (now - lastT) / 1000;
     lastT = now;
     if (dt > 0.05) dt = 0.05;
-    if (circleActive()) {
-      if (!circleSized) {
-        circleSized = true;
+    if (circleActive() || borderActive()) {
+      if (!teamSized) {
+        teamSized = true;
         try { window.resizeTo(300, 300); } catch(e) {}
       }
-      circleFrame(dt);
+      if (circleActive()) circleFrame(dt);
+      else borderFrame(dt);
       requestAnimationFrame(bounceWindow);
       return;
     }
-    circleSized = false;
+    teamSized = false;
     var maxX = screen.availWidth - outerWidth;
     var maxY = screen.availHeight - outerHeight;
     if (maxX < 50) maxX = 1000;
@@ -168,8 +204,8 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
       wy += wvy * dt;
       if (wx < 0) { wx = 0; wvx = Math.abs(wvx); }
       if (wx > maxX) { wx = maxX; wvx = -Math.abs(wvx); }
-      if (wy > maxY) { wy = maxY; wvy = -Math.abs(wvy); if (Math.abs(wvy) < 1) wvy = -1; }
-      if (wy < 0) { wy = 0; wvy = Math.abs(wvy); if (Math.abs(wvy) < 1) wvy = 1; }
+      if (wy > maxY) { wy = maxY; wvy = -Math.abs(wvy); }
+      if (wy < 0) { wy = 0; wvy = Math.abs(wvy); }
     } else {
       wx += wvx * dt;
       wy += wvy * dt;
@@ -305,29 +341,41 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
       setInterval(heartbeat, 500);
       setInterval(reconcile, 600);
       setInterval(function(){
-        if (circleActive()) return;
+        if (circleActive() || borderActive()) return;
         try {
           if (Math.random() < 0.3) window.focus();
-          if (Math.random() < 0.2) wvx = -wvx;
-          if (Math.random() < 0.2) wvy = -wvy;
-          if (Math.random() < 0.25) {
-            var sp = 150 + Math.random() * 300;
-            wvx = (wvx < 0 ? -1 : 1) * sp;
-            wvy = (wvy < 0 ? -1 : 1) * sp;
+          if (moveMode === 'dvd') {
+            if (Math.random() < 0.2) wvx = -wvx;
+            if (Math.random() < 0.2) wvy = -wvy;
+            if (Math.random() < 0.25) {
+              var sp = 150 + Math.random() * 300;
+              wvx = (wvx < 0 ? -1 : 1) * sp;
+              wvy = (wvy < 0 ? -1 : 1) * sp;
+            }
           }
         } catch(e) {}
       }, 800);
       setInterval(function(){
-        try { moveMode = localStorage.getItem('troll_mode') || 'dvd'; } catch(e) {}
+        try {
+          var nm = localStorage.getItem('troll_mode') || 'dvd';
+          if (nm !== moveMode) {
+            moveMode = nm;
+            if (moveMode === 'gravity') {
+              var split = 80 + Math.random() * 120;
+              wvx = (Math.random() < 0.5 ? -1 : 1) * split;
+              wvy = (Math.random() < 0.5 ? -1 : 1) * (250 - split);
+            }
+          }
+        } catch(e) {}
       }, 300);
       setInterval(function(){
-        if (circleActive()) return;
+        if (circleActive() || borderActive()) return;
         try {
           window.resizeTo(Math.round(280 + Math.random() * 240), Math.round(220 + Math.random() * 220));
         } catch(e) {}
       }, 2500);
       setInterval(function(){
-        if (circleActive()) return;
+        if (circleActive() || borderActive()) return;
         try {
           if (Math.random() < 0.2) {
             wx = Math.round(Math.random() * (screen.availWidth - outerWidth));
@@ -349,22 +397,25 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     } else {
       setInterval(function(){
         try {
-          if (Math.random() < 0.05) {
-            var cur = localStorage.getItem('troll_mode') || 'dvd';
-            var next = cur === 'dvd' ? 'gravity' : 'dvd';
-            localStorage.setItem('troll_mode', next);
-            console.log('[leader] mode -> ' + next);
-          }
-          if (Math.random() < 0.05) {
+          var roll = Math.floor(Math.random() * 10) + 1;
+          if (roll === 1) {
             localStorage.setItem('troll_circle', Date.now());
             console.log('[leader] circle!');
-          }
-          if (Math.random() < 0.2) {
+          } else if (roll === 2) {
+            localStorage.setItem('troll_border', Date.now());
+            console.log('[leader] border!');
+          } else if (roll >= 3 && roll <= 5) {
             var t = pickRandomPopup();
             if (t) {
               localStorage.setItem('troll_reopen', t + ':' + Date.now());
               console.log('[leader] reopen ' + t);
             }
+          }
+          if (Math.random() < 0.1) {
+            var cur = localStorage.getItem('troll_mode') || 'dvd';
+            var next = cur === 'dvd' ? 'gravity' : 'dvd';
+            localStorage.setItem('troll_mode', next);
+            console.log('[leader] mode -> ' + next);
           }
         } catch(e) {}
       }, 1000);
