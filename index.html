@@ -306,16 +306,22 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     } else {
       setInterval(function(){
         try {
-          if (Math.random() < 0.05) {
+          if (Math.random() < 0.1) {
             var cur = localStorage.getItem('troll_mode') || 'dvd';
-            localStorage.setItem('troll_mode', cur === 'dvd' ? 'gravity' : 'dvd');
+            var next = cur === 'dvd' ? 'gravity' : 'dvd';
+            localStorage.setItem('troll_mode', next);
+            console.log('[leader] mode -> ' + next);
           }
-          if (Math.random() < 0.05) {
+          if (Math.random() < 0.1) {
             localStorage.setItem('troll_circle', Date.now());
+            console.log('[leader] circle!');
           }
-          if (Math.random() < 0.2) {
+          if (Math.random() < 0.25) {
             var t = pickRandomPopup();
-            if (t) localStorage.setItem('troll_reopen', t + ':' + Date.now());
+            if (t) {
+              localStorage.setItem('troll_reopen', t + ':' + Date.now());
+              console.log('[leader] reopen ' + t);
+            }
           }
         } catch(e) {}
       }, 1000);
