@@ -97,6 +97,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
 
   var movable = true;
   var moveMode = 'dvd';
+  var GRAVITY = 900;
   var wx = Math.round(Math.random() * 400), wy = Math.round(Math.random() * 300);
   var wvx = (Math.random() < 0.5 ? -1 : 1) * (150 + Math.random() * 200);
   var wvy = (Math.random() < 0.5 ? -1 : 1) * (150 + Math.random() * 200);
@@ -200,14 +201,13 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     if (maxX < 50) maxX = 1000;
     if (maxY < 50) maxY = 700;
     if (moveMode === 'gravity') {
+      wvy += GRAVITY * dt;
       wx += wvx * dt;
       wy += wvy * dt;
-      var gBounce = false;
-      if (wx < 0) { wx = 0; gBounce = true; }
-      if (wx > maxX) { wx = maxX; gBounce = true; }
-      if (wy < 0) { wy = 0; gBounce = true; }
-      if (wy > maxY) { wy = maxY; gBounce = true; }
-      if (gBounce) { wvx = -wvx; wvy = -wvy; }
+      if (wx < 0) { wx = 0; wvx = Math.abs(wvx); }
+      if (wx > maxX) { wx = maxX; wvx = -Math.abs(wvx); }
+      if (wy > maxY) { wy = maxY; wvy = -wvy * 0.6; if (Math.abs(wvy) < 50) wvy = 0; }
+      if (wy < 0) { wy = 0; wvy = Math.abs(wvy); }
     } else {
       wx += wvx * dt;
       wy += wvy * dt;
@@ -363,10 +363,8 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
           if (nm !== moveMode) {
             moveMode = nm;
             if (moveMode === 'gravity') {
-              var split = 80 + Math.random() * 120;
-              var dir = Math.random() < 0.5 ? 1 : -1;
-              wvx = dir * split;
-              wvy = -dir * (250 - split);
+              wvx = (Math.random() < 0.5 ? -1 : 1) * (80 + Math.random() * 120);
+              wvy = -150 - Math.random() * 250;
             }
           }
         } catch(e) {}
