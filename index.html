@@ -403,18 +403,19 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     } else {
       setInterval(function(){
         try {
-          var roll = Math.floor(Math.random() * 3) + 1;
+          var roll = Math.floor(Math.random() * 4) + 1;
           if (roll === 1) {
             localStorage.setItem('troll_circle', Date.now());
             console.log('[leader] circle!');
           } else if (roll === 2) {
             localStorage.setItem('troll_border', Date.now());
             console.log('[leader] border!');
+          } else if (roll === 3) {
+            localStorage.setItem('troll_mode', 'gravity');
+            console.log('[leader] gravity');
           } else {
-            var cur = localStorage.getItem('troll_mode') || 'dvd';
-            var next = cur === 'dvd' ? 'gravity' : 'dvd';
-            localStorage.setItem('troll_mode', next);
-            console.log('[leader] mode -> ' + next);
+            localStorage.setItem('troll_mode', 'dvd');
+            console.log('[leader] dvd');
           }
         } catch(e) {}
       }, 30000);
