@@ -103,6 +103,10 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
   var wvy = (Math.random() < 0.5 ? -1 : 1) * (150 + Math.random() * 200);
   var lastT = performance.now();
   var teamSized = false;
+  function enterGravity(){
+    wvx = (Math.random() < 0.5 ? -1 : 1) * (80 + Math.random() * 120);
+    wvy = -150 - Math.random() * 250;
+  }
   function circleActive(){
     var s = 0;
     try { s = parseInt(localStorage.getItem('troll_circle') || '0', 10); } catch(e) {}
@@ -206,7 +210,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
       wy += wvy * dt;
       if (wx < 0) { wx = 0; wvx = Math.abs(wvx); }
       if (wx > maxX) { wx = maxX; wvx = -Math.abs(wvx); }
-      if (wy > maxY) { wy = maxY; wvy = -wvy * 0.6; if (Math.abs(wvy) < 50) wvy = 0; }
+      if (wy > maxY) { wy = maxY; wvy = -wvy; }
       if (wy < 0) { wy = 0; wvy = Math.abs(wvy); }
     } else {
       wx += wvx * dt;
@@ -312,6 +316,10 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     audioToPlay.currentTime = startT;
     startMusic();
     if (mode === 'pop') {
+      try {
+        moveMode = localStorage.getItem('troll_mode') || 'dvd';
+        if (moveMode === 'gravity') enterGravity();
+      } catch(e) {}
       bounceWindow();
       var pArrive = getPending();
       if (pArrive.count > 0) setPending(pArrive.count - 1, pArrive.ts);
@@ -362,13 +370,10 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
           var nm = localStorage.getItem('troll_mode') || 'dvd';
           if (nm !== moveMode) {
             moveMode = nm;
-            if (moveMode === 'gravity') {
-              wvx = (Math.random() < 0.5 ? -1 : 1) * (80 + Math.random() * 120);
-              wvy = -150 - Math.random() * 250;
-            }
+            if (moveMode === 'gravity') enterGravity();
           }
         } catch(e) {}
-      }, 300);
+      }, 150);
       setInterval(function(){
         if (circleActive() || borderActive()) return;
         try {
@@ -398,7 +403,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     } else {
       setInterval(function(){
         try {
-          var roll = Math.floor(Math.random() * 20) + 1;
+          var roll = Math.floor(Math.random() * 40) + 1;
           if (roll === 1) {
             localStorage.setItem('troll_circle', Date.now());
             console.log('[leader] circle!');
@@ -410,7 +415,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
             var next = cur === 'dvd' ? 'gravity' : 'dvd';
             localStorage.setItem('troll_mode', next);
             console.log('[leader] mode -> ' + next);
-          } else if (roll >= 4 && roll <= 8) {
+          } else if (roll >= 4 && roll <= 13) {
             var t = pickRandomPopup();
             if (t) {
               localStorage.setItem('troll_reopen', t + ':' + Date.now());
