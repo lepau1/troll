@@ -20,7 +20,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
 </audio>
 <div id="overlay">
   <h1>TROLL</h1>
-  <p id="status">CHECKING...</p>
+  <p id="status"></p>
   <button id="go">CLICK TO ENTER</button>
 </div>
 <script>
@@ -342,8 +342,6 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     return;
   }
 
-  window.onload = startMusic;
-
   var statusEl = document.getElementById('status');
 
   function probePopups(){
@@ -370,11 +368,6 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
   };
 
   overlay.style.display = 'flex';
-  if (probePopups()) {
-    statusEl.textContent = '';
-  } else {
-    statusEl.textContent = 'POPUPS ARE BLOCKED. Allow pop-ups for this site, then click again.';
-  }
 })();
 </script>
 </body>
