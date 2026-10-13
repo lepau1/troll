@@ -194,7 +194,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     }
     var spawnX = screen.availWidth - outerWidth - 10;
     var spawnY = 10;
-    var fallStart = idx * 250;
+    var fallStart = idx * 80;
     if (elapsed < fallStart) {
       solitaireDealt = false;
       wx = spawnX; wy = spawnY;
@@ -202,7 +202,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
       return;
     }
     if (!solitaireFocused) {
-      var focusTime = (N - 1 - idx) * 250;
+      var focusTime = (N - 1 - idx) * 80;
       if (elapsed >= focusTime) {
         solitaireFocused = true;
         try { window.focus(); } catch(e) {}
@@ -210,8 +210,8 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
     }
     if (!solitaireDealt) {
       solitaireDealt = true;
-      wvx = -(100 + Math.random() * 220);
-      wvy = -50 - Math.random() * 100;
+      wvx = -350;
+      wvy = 0;
     }
     wvy += GRAVITY * dt;
     wx += wvx * dt;
