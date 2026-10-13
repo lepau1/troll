@@ -428,7 +428,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
       setInterval(heartbeat, 500);
       setInterval(reconcile, 300);
       setInterval(function(){
-        if (moveMode === 'circle' || moveMode === 'border') return;
+        if (moveMode === 'circle' || moveMode === 'border' || solitaireActive()) return;
         try {
           if (Math.random() < 0.3) window.focus();
           if (moveMode === 'dvd') {
@@ -452,7 +452,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
         } catch(e) {}
       }, 150);
       setInterval(function(){
-        if (moveMode === 'circle' || moveMode === 'border') return;
+        if (moveMode === 'circle' || moveMode === 'border' || solitaireActive()) return;
         try {
           baseW = Math.round(280 + Math.random() * 240);
           baseH = Math.round(220 + Math.random() * 220);
@@ -461,7 +461,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
       }, 2500);
       setInterval(function(){
         try {
-          if (moveMode === 'circle' || moveMode === 'border') { wasSquash = false; return; }
+          if (moveMode === 'circle' || moveMode === 'border' || solitaireActive()) { wasSquash = false; return; }
           if (Date.now() < squashUntil) {
             wasSquash = true;
             var f = 0.8;
@@ -474,7 +474,7 @@ html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#
         } catch(e) {}
       }, 40);
       setInterval(function(){
-        if (moveMode === 'circle' || moveMode === 'border') return;
+        if (moveMode === 'circle' || moveMode === 'border' || solitaireActive()) return;
         try {
           if (Math.random() < 0.2) {
             wx = Math.round(Math.random() * (screen.availWidth - outerWidth));
